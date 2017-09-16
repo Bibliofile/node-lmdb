@@ -146,7 +146,8 @@ NAN_METHOD(EnvWrap::open) {
     setFlagFromValue(&flags, MDB_NOMETASYNC, "noMetaSync", false, options);
     setFlagFromValue(&flags, MDB_NOSYNC, "noSync", false, options);
     setFlagFromValue(&flags, MDB_MAPASYNC, "mapAsync", false, options);
-    
+    setFlagFromValue(&flags, MDB_NOLOCK, "noLock", false, options);
+
     // Set MDB_NOTLS to enable multiple read-only transactions on the same thread (in this case, the nodejs main thread)
     flags |= MDB_NOTLS;
 
@@ -175,21 +176,21 @@ NAN_METHOD(EnvWrap::close) {
 
 NAN_METHOD(EnvWrap::stat) {
     Nan::HandleScope scope;
-    
+
     // Get the wrapper
     EnvWrap *ew = Nan::ObjectWrap::Unwrap<EnvWrap>(info.This());
     if (!ew->env) {
         return Nan::ThrowError("The environment is already closed.");
     }
-    
+
     int rc;
     MDB_stat stat;
-    
+
     rc = mdb_env_stat(ew->env, &stat);
     if (rc != 0) {
         return Nan::ThrowError(mdb_strerror(rc));
     }
-    
+
     Local<Object> obj = Nan::New<Object>();
     obj->Set(Nan::New<String>("pageSize").ToLocalChecked(), Nan::New<Number>(stat.ms_psize));
     obj->Set(Nan::New<String>("treeDepth").ToLocalChecked(), Nan::New<Number>(stat.ms_depth));
@@ -202,21 +203,21 @@ NAN_METHOD(EnvWrap::stat) {
 
 NAN_METHOD(EnvWrap::info) {
     Nan::HandleScope scope;
-    
+
     // Get the wrapper
     EnvWrap *ew = Nan::ObjectWrap::Unwrap<EnvWrap>(info.This());
     if (!ew->env) {
         return Nan::ThrowError("The environment is already closed.");
     }
-    
+
     int rc;
     MDB_envinfo envinfo;
-    
+
     rc = mdb_env_info(ew->env, &envinfo);
     if (rc != 0) {
         return Nan::ThrowError(mdb_strerror(rc));
     }
-    
+
     Local<Object> obj = Nan::New<Object>();
     obj->Set(Nan::New<String>("mapAddress").ToLocalChecked(), Nan::New<Number>((uint64_t) envinfo.me_mapaddr));
     obj->Set(Nan::New<String>("mapSize").ToLocalChecked(), Nan::New<Number>(envinfo.me_mapsize));
